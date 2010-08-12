@@ -46,13 +46,15 @@ class Solr::Request::Standard < Solr::Request::Select
     hash = {}
     
     # standard request param processing
-    sort = @params[:sort].collect do |sort|
-      key = sort.keys[0]
-      "#{key.to_s} #{sort[key] == :descending ? 'desc' : 'asc'}"
-    end.join(',') if @params[:sort]
-    hash[:q] = sort ? "#{@params[:query]};#{sort}" : @params[:query]
+            #    sort = @params[:sort].collect do |sort|
+            #      key = sort.keys[0]
+            #      "#{key.to_s} #{sort[key] == :descending ? 'desc' : 'asc'}"
+            #    end.join(',') if @params[:sort]
+            #    hash[:q] = sort ? "#{@params[:query]};#{sort}" : @params[:query]
+    hash[:q] = @params[:query]
     hash["q.op"] = @params[:operator]
     hash[:df] = @params[:default_field]
+    hash[:sort] = @params[:sort]
 
     # common parameter processing
     hash[:start] = @params[:start]
