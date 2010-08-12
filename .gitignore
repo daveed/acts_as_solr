@@ -6,3 +6,6 @@ coverage.data
 solr/solr/data/*
 .svn
 test/db/*.db
+.loadpath
+.project
+.gitignore
