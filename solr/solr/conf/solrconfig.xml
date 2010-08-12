@@ -387,7 +387,6 @@
      
    </requestHandler>
 
-  
   <!-- Update request handler.  
   
        Note: Since solr1.1 requestHandlers requires a valid content type header if posted in 
@@ -396,7 +395,46 @@
        
        To enable solr1.1 behavior, remove the /update handler or change its path
     -->
-  <requestHandler name="/update" class="solr.XmlUpdateRequestHandler" />
+  <requestHandler name="/update" class="solr.XmlUpdateRequestHandler" >
+    <lst name="defaults">
+      <str name="update.processor">dedupe</str>
+    </lst>
+  </requestHandler>
+
+  <!-- Document Duplication Detection
+  
+       Preventing duplicate or near duplicate documents from entering an index or tagging documents with a signature/fingerprint
+       for duplicate field collapsing can be efficiently achieved with a low collision or fuzzy hash algorithm.
+       Solr should natively support deduplication techniques of this type and allow for the easy addition of new hash/signature implementations. 
+
+       Efficient, hash based exact/near document duplication detection and blocking.
+       Allow for both duplicate collapsing in search results as well as deduplication on adding a document. 
+
+       Adding in the dedupe process will change the allowDups setting so that it applies to an update Term (with field signatureField in this case)
+       rather than the unique field Term (of course the signatureField could be the unique field, but generally you want the unique field to be unique)
+
+       When a document is added, a signature will automatically be generated and attached to the document in the specified signatureField.
+  -->
+  <updateRequestProcessorChain name="dedupe">
+    <processor class="org.apache.solr.update.processor.SignatureUpdateProcessorFactory">
+      <!-- Enable/disable dedupe factory processing -->
+      <bool name="enabled">true</bool>
+
+      <!-- The name of the field used to hold the fingerprint/signature. Be sure the field is defined in schema.xml. -->
+      <str name="signatureField">signature</str>
+
+      <bool name="overwriteDupes">true</bool>
+
+      <!-- The fields to use to generate the signature hash in a comma separated list. By default, all fields on the document will be used. -->
+      <str name="fields">headline_t</str>
+
+      <!-- 64 bit hash used for exact duplicate detection, much faster than MD5 and smaller to index  -->
+      <str name="signatureClass">org.apache.solr.update.processor.Lookup3Signature</str>
+    </processor>
+    <processor class="solr.LogUpdateProcessorFactory" /> 
+    <processor class="solr.RunUpdateProcessorFactory" />
+  </updateRequestProcessorChain>
+
 
   <!-- CSV update handler, loaded on demand -->
   <requestHandler name="/update/csv" class="solr.CSVRequestHandler" startup="lazy" />
@@ -408,12 +446,12 @@
   <requestHandler name="/admin/plugins"    class="org.apache.solr.handler.admin.PluginInfoHandler" />
   <requestHandler name="/admin/threads"    class="org.apache.solr.handler.admin.ThreadDumpHandler" />
   <requestHandler name="/admin/properties" class="org.apache.solr.handler.admin.PropertiesRequestHandler" />
-  
+
   <!-- Echo the request contents back to the client -->
   <requestHandler name="/debug/dump" class="solr.DumpRequestHandler" >
     <lst name="defaults">
-     <str name="echoParams">explicit</str> <!-- for all params (including the default etc) use: 'all' -->
-     <str name="echoHandler">true</str>
+      <str name="echoParams">explicit</str> <!-- for all params (including the default etc) use: 'all' -->
+      <str name="echoHandler">true</str>
     </lst>
   </requestHandler>
   
